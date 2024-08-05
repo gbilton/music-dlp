@@ -3,6 +3,7 @@ import os
 import shlex
 import subprocess
 
+from config import MUSIC_PATH
 from enums import StatusEnum, TuningEnum
 from models import Song
 
@@ -15,7 +16,7 @@ class SongProcessing:
     }
 
     def __init__(self):
-        self.base_path = "/app/music"
+        self.base_path = MUSIC_PATH
 
     def refresh(self, song: Song):
         artist_path = self.create_artist_path(artist_name=song.artist.name)
@@ -26,7 +27,7 @@ class SongProcessing:
             song.downloaded_song_path = os.path.join(artist_path, song_paths.get("downloaded_song_path"))
 
         download_success = self.download_audio(song_path=song.downloaded_song_path, url=song.link)
-        if download_success:
+        if download_success.get("status", 500) == 200:
             song.saved_downloaded = True
         else:
             song.status = StatusEnum.ERROR
@@ -39,7 +40,7 @@ class SongProcessing:
             processed_audio_path=song.converted_song_path, 
             pitch_value=pitch_value,
             )
-        if convert_success:
+        if convert_success.get("status", 500) == 200:
             song.saved_converted = True
         else:
             song.status = StatusEnum.ERROR
@@ -58,11 +59,11 @@ class SongProcessing:
             download_command = f"yt-dlp -x --audio-format mp3 -o {song_path} {shlex.quote(url)} --verbose"
             download_result = subprocess.run(shlex.split(download_command), check=True, capture_output=True, text=True)
             print(download_result.stdout)  # Print verbose output
-            return {"detail": "Audio downloaded successfully", "song_path": song_path}
+            return {"detail": "Audio downloaded successfully", "song_path": song_path, "status": 200}
         except subprocess.CalledProcessError as e:
-            return {"detail": "Audio download failed", "error": e.stderr}
+            return {"detail": "Audio download failed", "error": e.stderr, "status": 500}
         except Exception as e:
-            return {"detail": "An unexpected error occurred", "error": str(e)}
+            return {"detail": "An unexpected error occurred", "error": str(e), "status": 500}
 
     def convert_tuning(self, original_audio_path: str, processed_audio_path: str, pitch_value: int):
         try:
@@ -70,11 +71,11 @@ class SongProcessing:
             sox_command = f"sox {original_audio_path} {processed_audio_path} pitch {pitch_value}"
             sox_result = subprocess.run(shlex.split(sox_command), check=True, capture_output=True, text=True)
             print(sox_result.stdout)  # Print sox output
-            return {"detail": "Audio conversion successful", "processed_audio_path": processed_audio_path}
+            return {"detail": "Audio conversion successful", "processed_audio_path": processed_audio_path, "status": 200}
         except subprocess.CalledProcessError as e:
-            return {"detail": "Audio conversion failed", "error": e.stderr}
+            return {"detail": "Audio conversion failed", "error": e.stderr, "status": 500}
         except Exception as e:
-            return {"detail": "An unexpected error occurred", "error": str(e)}
+            return {"detail": "An unexpected error occurred", "error": str(e), "status": 500}
 
     def create_artist_path(self, artist_name: str):
         parsed_artist_name = self._parse_name(artist_name)

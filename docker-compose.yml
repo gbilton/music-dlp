@@ -1,0 +1,19 @@
+services:
+  downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /mnt/media/music/dlp:/app/music 
+      - ./db:/app/db
+    ports:
+      - "8002:8000"
+    expose:
+      - "8000"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"

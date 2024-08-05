@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Management</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .container h2 {
+            margin-top: 0;
+        }
+
+        .container label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .container input,
+        .container select,
+        .container button {
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .container button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .container button:hover {
+            background-color: #45a049;
+        }
+
+        .song-list,
+        .artist-list {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .list-item button {
+            background-color: #f44336;
+            color: white;
+            cursor: pointer;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .list-item button:hover {
+            background-color: #e53935;
+        }
+
+        .refresh-button {
+            background-color: #008CBA;
+            color: white;
+            cursor: pointer;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-button:hover {
+            background-color: #007bb5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Music Management</h1>
+
+    <div class="container">
+        <h2>Create New Artist</h2>
+        <label for="artistName">Artist Name</label>
+        <input type="text" id="artistName">
+        <button onclick="createArtist()">Create Artist</button>
+    </div>
+
+    <div class="container">
+        <h2>Add New Song</h2>
+        <label for="songName">Song Name</label>
+        <input type="text" id="songName">
+        <label for="songLink">Song Link</label>
+        <input type="text" id="songLink">
+        <label for="songTuning">Original Tuning</label>
+        <select id="songTuning"></select>
+        <label for="songArtist">Artist</label>
+        <select id="songArtist"></select>
+        <button onclick="addSong()">Add Song</button>
+    </div>
+
+    <button class="refresh-button" onclick="refresh()">Refresh</button>
+
+    <div class="song-list">
+        <h2>Songs</h2>
+        <ul id="songs"></ul>
+    </div>
+
+    <div class="artist-list">
+        <h2>Artists</h2>
+        <ul id="artists"></ul>
+    </div>
+
+    <script>
+        const apiUrl = 'http://pi.uno:8002';
+
+        const TuningEnum = {
+            "E": "Standard",
+            "Eb": "E Flat"
+        };
+
+        function populateTuningOptions() {
+            const songTuningSelect = document.getElementById('songTuning');
+            songTuningSelect.innerHTML = '';
+            for (const [value, label] of Object.entries(TuningEnum)) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                songTuningSelect.appendChild(option);
+            }
+        }
+
+        async function createArtist() {
+            const name = document.getElementById('artistName').value;
+            const response = await fetch(`${apiUrl}/artist`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const artist = await response.json();
+            if (response.ok) {
+                alert(`Artist ${artist.name} created`);
+                loadArtists();
+            }
+        }
+
+        async function addSong() {
+            const name = document.getElementById('songName').value;
+            const link = document.getElementById('songLink').value;
+            const originalTuning = document.getElementById('songTuning').value;
+            const mappedOriginalTuning = TuningEnum[originalTuning];
+            const artistId = document.getElementById('songArtist').value;
+
+            const response = await fetch(`${apiUrl}/song`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, link, original_tuning: mappedOriginalTuning, artist_id: artistId })
+            });
+            const song = await response.json();
+            if (response.ok) {
+                alert(`Song ${song.name} added`);
+                loadSongs();
+            }
+        }
+
+        async function loadArtists() {
+            const response = await fetch(`${apiUrl}/artist`);
+            const artists = await response.json();
+            const artistSelect = document.getElementById('songArtist');
+            const artistList = document.getElementById('artists');
+            artistSelect.innerHTML = '';
+            artistList.innerHTML = '';
+
+            artists.forEach(artist => {
+                const option = document.createElement('option');
+                option.value = artist.id;
+                option.textContent = artist.name;
+                artistSelect.appendChild(option);
+
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                li.textContent = artist.name;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteArtist(artist.id);
+                li.appendChild(deleteButton);
+                artistList.appendChild(li);
+            });
+        }
+
+        async function loadSongs() {
+            const response = await fetch(`${apiUrl}/song`);
+            const songs = await response.json();
+            const songList = document.getElementById('songs');
+            songList.innerHTML = '';
+
+            songs.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                li.textContent = `${song.name} (${song.original_tuning})`;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteSong(song.id);
+                li.appendChild(deleteButton);
+                songList.appendChild(li);
+            });
+        }
+
+        async function deleteArtist(artistId) {
+            const response = await fetch(`${apiUrl}/artist/${artistId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert('Artist deleted');
+                loadArtists();
+                loadSongs();
+            }
+        }
+
+        async function deleteSong(songId) {
+            const response = await fetch(`${apiUrl}/song/${songId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert('Song deleted');
+                loadSongs();
+            }
+        }
+
+        async function refresh() {
+            const response = await fetch(`${apiUrl}/refresh`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                alert('Refreshed');
+                loadSongs();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTuningOptions();
+            loadArtists();
+            loadSongs();
+        });
+    </script>
+</body>
+
+</html>

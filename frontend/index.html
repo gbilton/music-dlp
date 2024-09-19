@@ -109,6 +109,28 @@
             background-color: #007bb5;
         }
 
+        .restore-button {
+            background-color: #f44336;
+            color: white;
+            cursor: pointer;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .restore-button:hover {
+            background-color: #e53935;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+            max-width: 600px;
+        }
+
         /* Loading overlay styles */
         .loading-overlay {
             position: fixed;
@@ -160,7 +182,10 @@
         <button onclick="addSong()">Add Song</button>
     </div>
 
-    <button class="refresh-button" onclick="refresh()">Refresh</button>
+    <div class="button-container">
+        <button class="restore-button" onclick="refresh({restore: true})">Restore</button>
+        <button class="refresh-button" onclick="refresh({restore: false})">Refresh</button>
+    </div>
 
     <div class="song-list">
         <h2>Songs</h2>
@@ -293,12 +318,16 @@
             }
         }
 
-        async function refresh() {
+        async function refresh(restore) {
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.classList.add('visible'); // Show loading screen
 
             const response = await fetch(`${apiUrl}/refresh`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(restore) // Send restore data in the request body
             });
 
             loadingOverlay.classList.remove('visible'); // Hide loading screen

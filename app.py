@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from enums import StatusEnum
 from models import Artist, Song
-from schemas import ArtistCreateSchema, ArtistSchema, SongCreateSchema, SongSchema
+from schemas import ArtistCreateSchema, ArtistSchema, RefreshSchema, SongCreateSchema, SongSchema
 from db import get_db, init_db
 from services import SongProcessing
 
@@ -42,12 +42,12 @@ async def health_check():
 
 
 @app.post("/refresh")
-async def refresh(db: Session = Depends(get_db)):
+async def refresh(refresh_schema: RefreshSchema, db: Session = Depends(get_db)):
     song_processing = SongProcessing()
 
     songs = db.query(Song).all()
     for song in songs:
-        if song.status != StatusEnum.SUCCESS:
+        if song.status != StatusEnum.SUCCESS or refresh_schema.restore:
             song_processing.refresh(song=song)
             db.commit()
 

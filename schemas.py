@@ -37,3 +37,6 @@ class SongSchema(SongBaseSchema):
     class Config:
         from_attributes = True
 
+
+class RefreshSchema(BaseModel):
+    restore: bool = False

@@ -115,6 +115,13 @@ async def delete_song(song_id: int, db: Session = Depends(get_db)):
     if song is None:
         raise HTTPException(status_code=404, detail="Song not found")
     db.delete(song)
+
+    song_processing = SongProcessing()
+    song_processing.delete_song(
+        downloaded_song_path=song.downloaded_song_path,
+        converted_song_path=song.converted_song_path
+        )
+
     db.commit()
     return song
 

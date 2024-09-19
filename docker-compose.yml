@@ -10,6 +10,7 @@ services:
       - "8002:8000"
     expose:
       - "8000"
+    restart: unless-stopped
 
   web:
     build:
@@ -17,3 +18,4 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
+    restart: unless-stopped

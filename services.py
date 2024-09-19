@@ -52,7 +52,6 @@ class SongProcessing:
 
         return song
         
-        
     def download_audio(self, song_path: str, url: str):
         try:
             # Download audio using yt-dlp with verbose output
@@ -92,6 +91,12 @@ class SongProcessing:
             "downloaded_song_path": parsed_song_name + "-" + parsed_tuning + ".mp3",
             "converted_song_path": parsed_song_name + "-" + parsed_other_tuning + ".mp3",
         }
+
+    def delete_song(self, downloaded_song_path: str, converted_song_path: str):
+        if downloaded_song_path:
+            os.remove(downloaded_song_path)
+        if converted_song_path:
+            os.remove(converted_song_path)
 
     def _parse_name(self, name: str):
         name = name.lower()

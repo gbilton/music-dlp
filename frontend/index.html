@@ -108,6 +108,32 @@
         .refresh-button:hover {
             background-color: #007bb5;
         }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+            /* Hidden by default */
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -144,6 +170,11 @@
     <div class="artist-list">
         <h2>Artists</h2>
         <ul id="artists"></ul>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-text">Loading...</div>
     </div>
 
     <script>
@@ -263,9 +294,15 @@
         }
 
         async function refresh() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.add('visible'); // Show loading screen
+
             const response = await fetch(`${apiUrl}/refresh`, {
                 method: 'POST'
             });
+
+            loadingOverlay.classList.remove('visible'); // Hide loading screen
+
             if (response.ok) {
                 alert('Refreshed');
                 loadSongs();
